@@ -25,7 +25,8 @@ function init() {
 
     scene = new THREE.Scene();
 
-    camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 100);
+    // camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera = new THREE.OrthographicCamera(-200, 200, 200, -200);
     camera.position.z = 0.01;
 
     initControls();
