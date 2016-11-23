@@ -3,6 +3,19 @@ var renderer, effect;
 var scene;
 var isDeviceing = 0; //默认开启
 
+var lon = 90,
+    lat = 0;
+var phi = 0,
+    theta = 0;
+var target = new THREE.Vector3();
+
+//竖直方向上的限制
+var limitLat = 60;
+
+var cameraQ = document.getElementById('quaternion');
+var cameraP = document.getElementById('position');
+
+
 init();
 animate();
 
@@ -10,9 +23,9 @@ function initDevices() {
     Devices = new THREE.DeviceOrientationControls(camera);
 }
 
-function initControls() {
-    controls = new THREE.OrbitControls(camera);
-}
+// function initControls() {
+//     controls = new THREE.OrbitControls(camera);
+// }
 
 function init() {
 
@@ -25,11 +38,14 @@ function init() {
 
     scene = new THREE.Scene();
 
-    // camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera = new THREE.OrthographicCamera(-200, 200, 200, -200);
-    camera.position.z = 0.01;
+    camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 100);
+    // camera = new THREE.OrthographicCamera(-50, 50, 50, -50);
+    // camera.position.z = 0.01;
 
-    initControls();
+    var cameraHelper = new THREE.CameraHelper(camera);
+    // scene.add(cameraHelper);
+
+    // initControls();
     initDevices();
     Devices.connect();
     //controls = new THREE.DeviceOrientationControls(camera);
@@ -80,6 +96,13 @@ function init() {
         isDeviceing = 1;
         initDevices();
     }, false);
+
+    // document.addEventListener('mousedown', onDocumentMouseDown, false);
+    // document.addEventListener('wheel', onDocumentMouseWheel, false);
+
+    // document.addEventListener('touchstart', onDocumentTouchStart, false);
+    // document.addEventListener('touchmove', onDocumentTouchMove, false);
+
 
 }
 
@@ -159,12 +182,97 @@ function onWindowResize() {
 
 }
 
+function onDocumentMouseDown(event) {
+
+    // event.preventDefault();
+
+    document.addEventListener('mousemove', onDocumentMouseMove, false);
+    document.addEventListener('mouseup', onDocumentMouseUp, false);
+
+}
+
+function onDocumentMouseMove(event) {
+
+    var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+    var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+    lon -= movementX * 0.1;
+    lat += movementY * 0.1;
+
+}
+
+function onDocumentMouseUp(event) {
+
+    document.removeEventListener('mousemove', onDocumentMouseMove);
+    document.removeEventListener('mouseup', onDocumentMouseUp);
+
+}
+
+function onDocumentMouseWheel(event) {
+
+    camera.fov += event.deltaY * 0.05;
+    camera.updateProjectionMatrix();
+
+}
+
+function onDocumentTouchStart(event) {
+
+    // event.preventDefault();
+
+    var touch = event.touches[0];
+
+    touchX = touch.screenX;
+    touchY = touch.screenY;
+
+}
+
+function onDocumentTouchMove(event) {
+
+    // event.preventDefault();
+
+    var touch = event.touches[0];
+
+    lon -= (touch.screenX - touchX) * 0.1;
+    lat += (touch.screenY - touchY) * 0.1;
+
+    touchX = touch.screenX;
+    touchY = touch.screenY;
+
+}
+
+
+
 function animate() {
 
     //controls.update();
-    isDeviceing === 0 ? controls.update() : Devices.update();
+    // isDeviceing === 0 ? controls.update() : Devices.update();
+
+    // lon += 0.1;
+    lat = Math.max(-limitLat, Math.min(limitLat, lat));
+    phi = THREE.Math.degToRad(90 - lat);
+    theta = THREE.Math.degToRad(lon);
+    target.x = Math.sin(phi) * Math.cos(theta);
+    target.y = Math.cos(phi);
+    target.z = Math.sin(phi) * Math.sin(theta);
+
+    camera.lookAt(target);
+
+    Devices.update();
     renderer.render(scene, camera);
 
+    recordData(cameraQ, camera.quaternion);
+    // recordData(cameraP, camera.position);
     requestAnimationFrame(animate);
 
+}
+
+
+function recordData(dom, obj) {
+    var str = '';
+    for (v in obj) {
+        if (typeof obj[v] !== 'function' && v.indexOf('_') < 0) {
+            str += v + ':' + obj[v] + '<br/>';
+        }
+    }
+    dom.innerHTML = str;
 }
