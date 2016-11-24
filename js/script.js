@@ -248,14 +248,15 @@ function animate() {
     // isDeviceing === 0 ? controls.update() : Devices.update();
 
     // lon += 0.1;
-    lat = Math.max(-limitLat, Math.min(limitLat, lat));
-    phi = THREE.Math.degToRad(90 - lat);
-    theta = THREE.Math.degToRad(lon);
-    target.x = Math.sin(phi) * Math.cos(theta);
-    target.y = Math.cos(phi);
-    target.z = Math.sin(phi) * Math.sin(theta);
 
-    camera.lookAt(target);
+    // lat = Math.max(-limitLat, Math.min(limitLat, lat));
+    // phi = THREE.Math.degToRad(90 - lat);
+    // theta = THREE.Math.degToRad(lon);
+    // target.x = Math.sin(phi) * Math.cos(theta);
+    // target.y = Math.cos(phi);
+    // target.z = Math.sin(phi) * Math.sin(theta);
+
+    // camera.lookAt(target);
 
     Devices.update();
     renderer.render(scene, camera);

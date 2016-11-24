@@ -25,7 +25,10 @@ THREE.DeviceOrientationControls = function(object) {
     this.lat = 0;
     this.phi = 0;
     this.theta = 0;
-    var target = new THREE.Vector3();
+    this.target = new THREE.Vector3();
+
+    //竖直方向上的限制
+    var limitLat = 60;
 
     //判断是否调用陀螺仪
     this.isGyro = true;
@@ -84,9 +87,9 @@ THREE.DeviceOrientationControls = function(object) {
         var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
         var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-        lon -= movementX * 0.1;
-        lat += movementY * 0.1;
-
+        scope.lon -= movementX * 0.1;
+        scope.lat += movementY * 0.1;
+        console.log(scope.lon, scope.lat);
     }
 
     function onDocumentMouseUp(event) {
@@ -98,8 +101,8 @@ THREE.DeviceOrientationControls = function(object) {
 
     function onDocumentMouseWheel(event) {
 
-        camera.fov += event.deltaY * 0.05;
-        camera.updateProjectionMatrix();
+        object.fov += event.deltaY * 0.05;
+        object.updateProjectionMatrix();
 
     }
 
@@ -120,11 +123,12 @@ THREE.DeviceOrientationControls = function(object) {
 
         var touch = event.touches[0];
 
-        lon -= (touch.screenX - touchX) * 0.1;
-        lat += (touch.screenY - touchY) * 0.1;
+        scope.lon -= (touch.screenX - touchX) * 0.1;
+        scope.lat += (touch.screenY - touchY) * 0.1;
 
         touchX = touch.screenX;
         touchY = touch.screenY;
+
 
     }
 
@@ -174,15 +178,17 @@ THREE.DeviceOrientationControls = function(object) {
 
 
         if (!this.isGyro) {
-            lat = Math.max(-limitLat, Math.min(limitLat, lat));
-            phi = THREE.Math.degToRad(90 - lat);
-            theta = THREE.Math.degToRad(lon);
-            target.x = Math.sin(phi) * Math.cos(theta);
-            target.y = Math.cos(phi);
-            // 加负号，往右滑动，相机看向右边
-            target.z = -Math.sin(phi) * Math.sin(theta);
 
-            scope.object.lookAt(target);
+            this.lat = Math.max(-limitLat, Math.min(limitLat, this.lat));
+            this.phi = THREE.Math.degToRad(90 - this.lat);
+            this.theta = THREE.Math.degToRad(this.lon);
+            this.target.x = Math.sin(this.phi) * Math.cos(this.theta);
+            this.target.y = Math.cos(this.phi);
+            // 加负号，往右滑动，相机看向右边
+            this.target.z = -Math.sin(this.phi) * Math.sin(this.theta);
+
+            // console.log(this.target);
+            scope.object.lookAt(this.target);
         }
         // console.log(this.isGyro);
     };
