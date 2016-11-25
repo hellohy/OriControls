@@ -12,8 +12,6 @@ var target = new THREE.Vector3();
 //竖直方向上的限制
 var limitLat = 60;
 
-var cameraQ = document.getElementById('quaternion');
-var cameraP = document.getElementById('position');
 
 
 init();
@@ -97,13 +95,6 @@ function init() {
         initDevices();
     }, false);
 
-    // document.addEventListener('mousedown', onDocumentMouseDown, false);
-    // document.addEventListener('wheel', onDocumentMouseWheel, false);
-
-    // document.addEventListener('touchstart', onDocumentTouchStart, false);
-    // document.addEventListener('touchmove', onDocumentTouchMove, false);
-
-
 }
 
 function createBuilding(texture) {
@@ -182,65 +173,6 @@ function onWindowResize() {
 
 }
 
-function onDocumentMouseDown(event) {
-
-    // event.preventDefault();
-
-    document.addEventListener('mousemove', onDocumentMouseMove, false);
-    document.addEventListener('mouseup', onDocumentMouseUp, false);
-
-}
-
-function onDocumentMouseMove(event) {
-
-    var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-    var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-
-    lon -= movementX * 0.1;
-    lat += movementY * 0.1;
-
-}
-
-function onDocumentMouseUp(event) {
-
-    document.removeEventListener('mousemove', onDocumentMouseMove);
-    document.removeEventListener('mouseup', onDocumentMouseUp);
-
-}
-
-function onDocumentMouseWheel(event) {
-
-    camera.fov += event.deltaY * 0.05;
-    camera.updateProjectionMatrix();
-
-}
-
-function onDocumentTouchStart(event) {
-
-    // event.preventDefault();
-
-    var touch = event.touches[0];
-
-    touchX = touch.screenX;
-    touchY = touch.screenY;
-
-}
-
-function onDocumentTouchMove(event) {
-
-    // event.preventDefault();
-
-    var touch = event.touches[0];
-
-    lon -= (touch.screenX - touchX) * 0.1;
-    lat += (touch.screenY - touchY) * 0.1;
-
-    touchX = touch.screenX;
-    touchY = touch.screenY;
-
-}
-
-
 
 function animate() {
 
@@ -261,19 +193,7 @@ function animate() {
     Devices.update();
     renderer.render(scene, camera);
 
-    recordData(cameraQ, camera.quaternion);
     // recordData(cameraP, camera.position);
     requestAnimationFrame(animate);
 
-}
-
-
-function recordData(dom, obj) {
-    var str = '';
-    for (v in obj) {
-        if (typeof obj[v] !== 'function' && v.indexOf('_') < 0) {
-            str += v + ':' + obj[v] + '<br/>';
-        }
-    }
-    dom.innerHTML = str;
 }

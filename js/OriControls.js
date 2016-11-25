@@ -1,10 +1,3 @@
-/**
- * @author richt / http://richt.me
- * @author WestLangley / http://github.com/WestLangley
- *
- * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
- */
-
 THREE.DeviceOrientationControls = function(object) {
 
     var scope = this;
@@ -89,7 +82,6 @@ THREE.DeviceOrientationControls = function(object) {
 
         scope.lon -= movementX * 0.1;
         scope.lat += movementY * 0.1;
-        console.log(scope.lon, scope.lat);
     }
 
     function onDocumentMouseUp(event) {
@@ -145,7 +137,7 @@ THREE.DeviceOrientationControls = function(object) {
 
         //非陀螺仪控制器
         document.addEventListener('mousedown', onDocumentMouseDown, false);
-        document.addEventListener('wheel', onDocumentMouseWheel, false);
+        // document.addEventListener('wheel', onDocumentMouseWheel, false);
 
         document.addEventListener('touchstart', onDocumentTouchStart, false);
         document.addEventListener('touchmove', onDocumentTouchMove, false);
@@ -172,8 +164,17 @@ THREE.DeviceOrientationControls = function(object) {
             var gamma = scope.deviceOrientation.gamma ? THREE.Math.degToRad(scope.deviceOrientation.gamma) : 0; // Y''
             var orient = scope.screenOrientation ? THREE.Math.degToRad(scope.screenOrientation) : 0; // O
 
+            alpha += this.lon - gamma;
+            beta += this.lat;
+
             setObjectQuaternion(scope.object.quaternion, alpha, beta, gamma, orient);
             this.alpha = alpha;
+
+            if (scope.deviceOrientation.alpha) {
+                this.lon = scope.deviceOrientation.alpha + scope.deviceOrientation.gamma;
+                this.lat = scope.deviceOrientation.beta;
+            }
+
         }
 
 
@@ -190,7 +191,10 @@ THREE.DeviceOrientationControls = function(object) {
             // console.log(this.target);
             scope.object.lookAt(this.target);
         }
-        // console.log(this.isGyro);
+
+        recordData(document.getElementById('quaternion'), scope.object.quaternion);
+        recordData(document.getElementById('mouse_pos'), this);
+        recordData(document.getElementById('ori_pos'), scope.deviceOrientation);
     };
 
     this.updateAlphaOffsetAngle = function(angle) {
@@ -207,5 +211,17 @@ THREE.DeviceOrientationControls = function(object) {
     };
 
     this.connect();
+
+    function recordData(dom, obj) {
+        var str = dom.getAttribute('id') + '<br>';
+
+        for (v in obj) {
+            var tmp = typeof obj[v];
+            if ((tmp !== 'function' && tmp !== 'object') && v.indexOf('_') < 0) {
+                str += v + ':' + obj[v] + '<br>';
+            }
+        }
+        dom.innerHTML = str;
+    }
 
 };

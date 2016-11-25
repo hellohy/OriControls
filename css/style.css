@@ -8,7 +8,8 @@ body {
 
 #info,
 #quaternion,
-#position {
+#mouse_pos,
+#ori_pos {
     position: absolute;
     top: 0px;
     width: 100%;
@@ -21,15 +22,20 @@ body {
 }
 
 #quaternion,
-#position {
+#mouse_pos,
+#ori_pos {
     top: 40px;
     font-size: 20px;
     text-align: left;
     left: 30px;
 }
 
-#position {
+#mouse_pos {
     left: 300px;
+}
+
+#ori_pos {
+    left: 600px;
 }
 
 a {
