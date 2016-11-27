@@ -20,11 +20,24 @@ THREE.DeviceOrientationControls = function(object) {
     this.theta = 0;
     this.target = new THREE.Vector3();
 
+    this.lastLon = 90;
+    this.lastLat = 0;
+
+    this.lastOa = 0;
+    this.lastOb = THREE.Math.degToRad(90);
+    this.lastOg = 0;
+
+    // this.gyroMove = false;
     //竖直方向上的限制
-    var limitLat = 60;
+    var limitLat = 10;
 
     //判断是否调用陀螺仪
     this.isGyro = true;
+
+    // 获取陀螺仪的初始参数,开发中模拟alpha,beta,gamma分别为0,90,0
+    // this.upGyroInfo = this.getGyroInfo();
+    this.upGyroInfo = [0, 90, 0];
+
 
     var onDeviceOrientationChangeEvent = function(event) {
 
@@ -70,6 +83,18 @@ THREE.DeviceOrientationControls = function(object) {
         // event.preventDefault();
 
         scope.isGyro = false;
+
+        if (scope.getGyroInfo().length && scope.upGyroInfo.length) {
+            var downGyroInfo = scope.getGyroInfo();
+            console.log(downGyroInfo, scope.upGyroInfo);
+            scope.deltaAlpha = downGyroInfo[0] - scope.upGyroInfo[0];
+            scope.deltaBeta = downGyroInfo[1] - scope.upGyroInfo[1];
+            scope.lat += downGyroInfo[1] - scope.upGyroInfo[1];
+            scope.lon += downGyroInfo[0] - scope.upGyroInfo[0];
+        }
+
+        scope.downNoGyroInfo = scope.getNoGyroInfo();
+
         document.addEventListener('mousemove', onDocumentMouseMove, false);
         document.addEventListener('mouseup', onDocumentMouseUp, false);
 
@@ -86,6 +111,18 @@ THREE.DeviceOrientationControls = function(object) {
 
     function onDocumentMouseUp(event) {
         scope.isGyro = true;
+
+        var noGyroInfo = scope.getNoGyroInfo();
+        // scope.lastLon = scope.lon;
+        // scope.lastLat = scope.lat;
+
+
+        scope.lastLon += noGyroInfo[0] - scope.downNoGyroInfo[0];
+        scope.lastLat += noGyroInfo[1] - scope.downNoGyroInfo[1];
+        console.log(scope.lastLon, scope.lastLat);
+
+        scope.upGyroInfo = scope.getGyroInfo();
+
         document.removeEventListener('mousemove', onDocumentMouseMove);
         document.removeEventListener('mouseup', onDocumentMouseUp);
 
@@ -112,7 +149,6 @@ THREE.DeviceOrientationControls = function(object) {
     function onDocumentTouchMove(event) {
 
         // event.preventDefault();
-
         var touch = event.touches[0];
 
         scope.lon -= (touch.screenX - touchX) * 0.1;
@@ -120,11 +156,11 @@ THREE.DeviceOrientationControls = function(object) {
 
         touchX = touch.screenX;
         touchY = touch.screenY;
-
-
     }
 
-
+    function onTouchEnd(event) {
+        console.log('touch end');
+    }
 
     this.connect = function() {
 
@@ -141,7 +177,7 @@ THREE.DeviceOrientationControls = function(object) {
 
         document.addEventListener('touchstart', onDocumentTouchStart, false);
         document.addEventListener('touchmove', onDocumentTouchMove, false);
-
+        document.addEventListener('touchend', onTouchEnd, false);
     };
 
     this.disconnect = function() {
@@ -159,22 +195,39 @@ THREE.DeviceOrientationControls = function(object) {
 
         if (this.isGyro) {
             //默认值为竖屏，alpha = 0, beta = 90, gamma = 0;
-            var alpha = scope.deviceOrientation.alpha ? THREE.Math.degToRad(scope.deviceOrientation.alpha) + this.alphaOffsetAngle : 0; // Z
-            var beta = scope.deviceOrientation.beta ? THREE.Math.degToRad(scope.deviceOrientation.beta) : THREE.Math.degToRad(90); // X'
-            var gamma = scope.deviceOrientation.gamma ? THREE.Math.degToRad(scope.deviceOrientation.gamma) : 0; // Y''
-            var orient = scope.screenOrientation ? THREE.Math.degToRad(scope.screenOrientation) : 0; // O
+            var a = scope.deviceOrientation.alpha;
+            var b = scope.deviceOrientation.beta;
+            var g = scope.deviceOrientation.gamma;
+            // var gamma = g ? THREE.Math.degToRad(g) : 0;
+            var gamma = 0;
 
-            alpha += this.lon - gamma;
-            beta += this.lat;
+            var lastAlpha = THREE.Math.degToRad(this.lastLon - 90 - gamma);
+            var alpha = a ? THREE.Math.degToRad(a) + this.alphaOffsetAngle + lastAlpha : lastAlpha;
+
+            // var lastBeta = THREE.Math.degToRad(this.lastLat);
+            // var beta = b ? THREE.Math.degToRad(b) + lastBeta : lastBeta + THREE.Math.degToRad(90);
+
+            var beta;
+            var lastBeta = this.lastLat;
+            if (b) {
+                beta = THREE.Math.degToRad(Math.max(-limitLat + 90, Math.min(limitLat + 90, b + lastBeta)));
+            } else {
+                beta = THREE.Math.degToRad(90 + lastBeta);
+            }
+
+            var orient = scope.screenOrientation ? THREE.Math.degToRad(scope.screenOrientation) : 0;
 
             setObjectQuaternion(scope.object.quaternion, alpha, beta, gamma, orient);
             this.alpha = alpha;
 
-            if (scope.deviceOrientation.alpha) {
-                this.lon = scope.deviceOrientation.alpha + scope.deviceOrientation.gamma;
-                this.lat = scope.deviceOrientation.beta;
-            }
+            // if (scope.deviceOrientation.alpha) {
+            //     this.lon = THREE.Math.radToDeg(scope.deviceOrientation.alpha + scope.deviceOrientation.gamma);
+            //     this.lat = THREE.Math.radToDeg(scope.deviceOrientation.beta);
+            // }
 
+            this.lastOa = alpha;
+            this.lastOb = beta;
+            this.lastOg = gamma;
         }
 
 
@@ -187,14 +240,13 @@ THREE.DeviceOrientationControls = function(object) {
             this.target.y = Math.cos(this.phi);
             // 加负号，往右滑动，相机看向右边
             this.target.z = -Math.sin(this.phi) * Math.sin(this.theta);
-
             // console.log(this.target);
             scope.object.lookAt(this.target);
         }
 
-        recordData(document.getElementById('quaternion'), scope.object.quaternion);
-        recordData(document.getElementById('mouse_pos'), this);
-        recordData(document.getElementById('ori_pos'), scope.deviceOrientation);
+        // recordData(document.getElementById('quaternion'), scope.object.quaternion);
+        // recordData(document.getElementById('mouse_pos'), this);
+        // recordData(document.getElementById('ori_pos'), scope.deviceOrientation);
     };
 
     this.updateAlphaOffsetAngle = function(angle) {
@@ -211,6 +263,20 @@ THREE.DeviceOrientationControls = function(object) {
     };
 
     this.connect();
+
+
+    this.getGyroInfo = function() {
+        var arr = [];
+        var tmp = this.deviceOrientation;
+        if (tmp.alpha !== undefined && tmp.alpha !== null) {
+            arr = [tmp.alpha, tmp.beta, tmp.gamma];
+        }
+        return arr;
+    }
+
+    this.getNoGyroInfo = function() {
+        return [this.lon, this.lat];
+    }
 
     function recordData(dom, obj) {
         var str = dom.getAttribute('id') + '<br>';
