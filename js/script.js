@@ -18,7 +18,7 @@ init();
 animate();
 
 function initDevices() {
-    Devices = new THREE.DeviceOrientationControls(camera);
+    Devices = new GyroControls(camera);
 }
 
 // function initControls() {
