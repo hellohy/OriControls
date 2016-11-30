@@ -16,6 +16,7 @@ var GyroControls = function (object) {
   // 非陀螺仪控制器所需参数
   this.lon = 90
   this.lat = 0
+
   this.phi = 0
   this.theta = 0
   this.target = new THREE.Vector3()
@@ -28,6 +29,7 @@ var GyroControls = function (object) {
 
   // 判断是否调用陀螺仪
   this.isGyro = true
+  this.gyroReady = false
 
   // 获取陀螺仪的初始参数,开发中模拟alpha,beta,gamma分别为0,90,0
   // this.upGyroInfo = this.getGyroInfo()
@@ -35,6 +37,14 @@ var GyroControls = function (object) {
 
   var onDeviceOrientationChangeEvent = function (event) {
     scope.deviceOrientation = event
+    if (!scope.gyroReady) {
+      scope.upGyroInfo = scope.getGyroInfo()
+      console.log(scope.upGyroInfo)
+
+      // scope.lastLon = scope.upGyroInfo[0]
+      // scope.lastLat = scope.upGyroInfo[1]
+    }
+    scope.gyroReady = true
   }
 
   var onScreenOrientationChangeEvent = function () {
@@ -70,7 +80,7 @@ var GyroControls = function (object) {
 
     if (scope.getGyroInfo().length && scope.upGyroInfo.length) {
       var downGyroInfo = scope.getGyroInfo()
-        // console.log(downGyroInfo, scope.upGyroInfo)
+      console.log(downGyroInfo, scope.upGyroInfo)
       scope.deltaAlpha = downGyroInfo[0] - scope.upGyroInfo[0]
       scope.deltaBeta = downGyroInfo[1] - scope.upGyroInfo[1]
       scope.lat += downGyroInfo[1] - scope.upGyroInfo[1]
@@ -174,7 +184,6 @@ var GyroControls = function (object) {
 
   this.update = function () {
     if (scope.enabled === false) return
-
     if (this.isGyro) {
       // 默认值为竖屏，alpha = 0, beta = 90, gamma = 0
       var a = scope.deviceOrientation.alpha
@@ -221,8 +230,6 @@ var GyroControls = function (object) {
     this.disconnect()
   }
 
-  this.connect()
-
   this.getGyroInfo = function () {
     var arr = []
     var tmp = this.deviceOrientation
@@ -235,4 +242,6 @@ var GyroControls = function (object) {
   this.getNoGyroInfo = function () {
     return [this.lon, this.lat]
   }
+
+  this.connect()
 }
